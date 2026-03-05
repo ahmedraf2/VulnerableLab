@@ -177,6 +177,7 @@ def login():
 
     pw_hash = hashlib.md5(password.encode()).hexdigest()
     db = get_db()
+    # Not parameterized query (Sqli)
 
     row = db.execute(
         "SELECT * FROM users WHERE username = '" + username + "' AND password = '" + pw_hash + "'"
@@ -238,6 +239,10 @@ def dashboard():
     ).fetchone()["cnt"]
     return render_template("dashboard.html", user=user, orders=orders, unread=msg_count)
 
+# -------------------------------------------------------
+# this is vulnerable to idor : not comparing current user session uid with uid on the path
+# Attacker can query other users informations 
+# -------------------------------------------------------
 
 @app.route("/user/<int:uid>")
 def user_profile(uid):
@@ -248,6 +253,11 @@ def user_profile(uid):
     listings = db.execute("SELECT * FROM products WHERE seller_id = ?", (uid,)).fetchall()
     return render_template("profile.html", profile=user_data, listings=listings, user=current_user())
 
+
+# -------------------------------------------------------
+# settings - mass assignment vulnerability (parameter tampering)
+# Even blacklisting is a bad fix (whitelisting is better option)
+# -------------------------------------------------------
 
 Black_list = {'role','balance','id','avatar_url'}
 
@@ -272,6 +282,10 @@ def settings():
 
     return render_template("settings.html", user=user)
 
+# -------------------------------------------------------
+# products --> Sql injection again
+# ------------------------------------------------------
+
 @app.route("/products")
 def products_list():
     db = get_db()
@@ -279,6 +293,7 @@ def products_list():
     q = request.args.get("q", "")
 
     if q:
+        # concatenating user input into sql again (paramterized query)... bad habit
         rows = db.execute(
             "SELECT * FROM products WHERE name LIKE '%" + q + "%' OR description LIKE '%" + q + "%'"
         ).fetchall()
@@ -306,7 +321,10 @@ def product_detail(pid):
     return render_template("product_detail.html", product=product, reviews=reviews,
                            seller=seller, user=current_user())
 
-
+# -------------------------------------------------------
+# reviews - stored xss because it renders body as safe (doesn't escape < > " ')
+# <div>{{ r.body | safe }}</div> on product_detail.htlm 
+# -------------------------------------------------------
 @app.route("/product/<int:pid>/review", methods=["POST"])
 @login_required
 def post_review(pid):
@@ -318,6 +336,9 @@ def post_review(pid):
     db.commit()
     return redirect(f"/product/{pid}")
 
+# -------------------------------------------------------
+# ordering - business logic flaws
+# -------------------------------------------------------
 
 @app.route("/buy/<int:pid>", methods=["POST"])
 @login_required
@@ -356,6 +377,8 @@ def buy_product(pid):
     db.commit()
 
     return redirect("/dashboard")
+
+# order detail - IDOR again
 
 @app.route("/order/<int:oid>")
 @login_required
@@ -403,12 +426,16 @@ def send_message():
     db.commit()
     return redirect("/messages")
 
-
+# -------------------------------------------------------
+# SSTI - "template preview" feature for sellers
+# supposed to let sellers preview their shop banner
+# -------------------------------------------------------
 @app.route("/seller/preview-banner")
 @login_required
 def preview_banner():
     text = request.args.get("text", "My Shop")
     color = request.args.get("color", "#3b82f6")
+    # render_template_string with user input (SSTI)
     tpl = f"""
     <div style="background:{color};padding:2rem;border-radius:12px;text-align:center;margin:2rem 0;">
         <h1 style="color:white;margin:0;">{text}</h1>
@@ -425,6 +452,9 @@ def preview_banner():
     {{% endblock %}}
     """.format(tpl))
 
+# -------------------------------------------------------
+# SSRF - "check if a product image URL is valid"
+# -------------------------------------------------------
 
 @app.route("/api/check-image")
 def check_image_url():
@@ -446,7 +476,7 @@ def check_image_url():
         return jsonify({"url": url, "reachable": False, "error": str(e)})
 
 
-# "protected" Only admin can view this
+# "protected" Only admin can view this (Not Really)
 @app.route("/internal/admin-stats")
 def internal_stats():
     if not (session.get('user_id') == 1 or request.remote_addr in ("127.0.0.1", "::1")):
