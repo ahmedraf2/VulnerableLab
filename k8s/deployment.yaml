@@ -1,0 +1,66 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: marketplace
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: marketplace-app
+  namespace: marketplace
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: marketplace
+  template:
+    metadata:
+      labels:
+        app: marketplace
+    spec:
+      containers:
+      - name: app
+        image: marketplace:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 5000
+        env:
+        - name: FLASK_DEBUG
+          value: "1"
+        - name: SECRET_KEY
+          value: "changeme-later-todo"
+        securityContext:
+          privileged: true
+          runAsUser: 0
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: marketplace-svc
+  namespace: marketplace
+spec:
+  type: NodePort
+  selector:
+    app: marketplace
+  ports:
+  - port: 5000
+    targetPort: 5000
+    nodePort: 30080
+
+---
+# gave default SA cluster-admin because kubectl kept giving permission errors
+# TODO: fix this later
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: marketplace-binding
+subjects:
+- kind: ServiceAccount
+  name: default
+  namespace: marketplace
+roleRef:
+  kind: ClusterRole
+  name: cluster-admin
+  apiGroup: rbac.authorization.k8s.io

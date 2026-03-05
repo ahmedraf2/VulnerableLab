@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}Log in{% endblock %}
+{% block content %}
+<div style="max-width:380px;margin:3rem auto;">
+    <div class="card" style="padding:2rem;">
+        <h2 style="color:#e6edf3;margin-bottom:0.25rem;">Log in</h2>
+        <p class="muted" style="margin-bottom:1.5rem;font-size:0.9rem;">Welcome back to </p>
+
+        {% if error %}
+        <div class="error-box">{{ error }}</div>
+        {% endif %}
+
+        <form method="POST">
+            <div class="form-group">
+                <label>Username</label>
+                <input type="text" name="username" placeholder="your username" required>
+            </div>
+            <div class="form-group">
+                <label>Password</label>
+                <input type="password" name="password" placeholder="your password" required>
+            </div>
+            <button type="submit" class="btn btn-primary" style="width:100%;">Log in</button>
+        </form>
+
+        <p style="text-align:center;margin-top:1.25rem;font-size:0.85rem;" class="muted">
+            Don't have an account? <a href="/register">Sign up</a>
+        </p>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}Home{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h1>Welcome to </h1>
+    <p>Your favorite marketplace for tech gear. Browse, buy, and sell.</p>
+</div>
+
+<div style="display:flex;gap:1rem;margin-bottom:2rem;">
+    <a href="/products" class="btn btn-primary">Browse All Products</a>
+    <a href="/products?category=electronics" class="btn btn-outline">Electronics</a>
+    <a href="/products?category=accessories" class="btn btn-outline">Accessories</a>
+</div>
+
+<h2 class="section-title">Latest Products</h2>
+<div class="product-grid">
+    {% for p in products %}
+    <a href="/product/{{ p.id }}" class="card" style="text-decoration:none;">
+        <div style="height:100px;background:#0c0f1a;border-radius:6px;display:flex;align-items:center;justify-content:center;margin-bottom:0.75rem;font-size:2.5rem;">
+            {% if 'keyboard' in p.name|lower %}⌨️
+            {% elif 'headphone' in p.name|lower %}🎧
+            {% elif 'mouse' in p.name|lower %}🖱️
+            {% elif 'ssd' in p.name|lower %}💾
+            {% elif 'charger' in p.name|lower %}🔌
+            {% elif 'cable' in p.name|lower %}🔗
+            {% elif 'lamp' in p.name|lower %}💡
+            {% elif 'webcam' in p.name|lower %}📷
+            {% else %}📦{% endif %}
+        </div>
+        <h3>{{ p.name }}</h3>
+        <p class="meta">{{ p.description[:60] }}{% if p.description|length > 60 %}...{% endif %}</p>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:0.75rem;">
+            <span class="price">${{ "%.2f"|format(p.price) }}</span>
+            <span class="badge badge-green">{{ p.stock }} in stock</span>
+        </div>
+    </a>
+    {% endfor %}
+</div>
+{% endblock %}

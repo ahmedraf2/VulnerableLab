@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}{{ profile.username }}{% endblock %}
+{% block content %}
+<a href="/products" class="muted" style="font-size:0.85rem;">&larr; back</a>
+
+<div class="two-col" style="margin-top:1rem;">
+    <div class="card">
+        <div style="display:flex;align-items:center;gap:1rem;margin-bottom:1.25rem;">
+            <div style="width:64px;height:64px;background:#21262d;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.5rem;color:#8b949e;">
+                {{ profile.username[0]|upper }}
+            </div>
+            <div>
+                <h2 style="color:#e6edf3;margin-bottom:0;">{{ profile.username }}</h2>
+                <span class="badge badge-{% if profile.role == 'admin' %}red{% elif profile.role == 'seller' %}orange{% else %}blue{% endif %}">{{ profile.role }}</span>
+            </div>
+        </div>
+
+        <div style="font-size:0.9rem;">
+            <p><span class="muted">Email:</span> {{ profile.email }}</p>
+            <p><span class="muted">Balance:</span> <span class="price">${{ "%.2f"|format(profile.balance) }}</span></p>
+            {% if profile.bio %}
+            <p style="margin-top:0.75rem;">{{ profile.bio }}</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <div>
+        <h3 class="section-title" style="font-size:1.1rem;">Listings by {{ profile.username }}</h3>
+        {% for p in listings %}
+        <a href="/product/{{ p.id }}" class="card" style="display:block;margin-bottom:0.75rem;text-decoration:none;">
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+                <span style="color:#e6edf3;font-weight:500;">{{ p.name }}</span>
+                <span class="price">${{ "%.2f"|format(p.price) }}</span>
+            </div>
+        </a>
+        {% endfor %}
+        {% if not listings %}
+        <p class="muted">No listings.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

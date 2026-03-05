@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% block title %}{{ product.name }}{% endblock %}
+{% block content %}
+<a href="/products" class="muted" style="font-size:0.85rem;">&larr; back to products</a>
+
+<div class="two-col" style="margin-top:1rem;">
+    <div>
+        <div class="card" style="height:250px;display:flex;align-items:center;justify-content:center;font-size:5rem;margin-bottom:1rem;">
+            {% if 'keyboard' in product.name|lower %}⌨️{% elif 'headphone' in product.name|lower %}🎧{% elif 'mouse' in product.name|lower %}🖱️{% elif 'ssd' in product.name|lower %}💾{% elif 'charger' in product.name|lower %}🔌{% elif 'cable' in product.name|lower %}🔗{% elif 'lamp' in product.name|lower %}💡{% elif 'webcam' in product.name|lower %}📷{% else %}📦{% endif %}
+        </div>
+    </div>
+    <div>
+        <h1 style="color:#e6edf3;">{{ product.name }}</h1>
+        <p style="margin:0.5rem 0 1rem;">{{ product.description }}</p>
+        <div class="price" style="font-size:1.8rem;margin-bottom:0.5rem;">${{ "%.2f"|format(product.price) }}</div>
+        <p class="muted" style="font-size:0.85rem;">{{ product.stock }} in stock &middot; sold by <a href="/user/{{ product.seller_id }}">{{ seller.username }}</a></p>
+        <p class="muted" style="font-size:0.8rem;">Category: <span class="badge badge-blue">{{ product.category }}</span></p>
+
+        {% if user %}
+        <form method="POST" action="/buy/{{ product.id }}" style="margin-top:1.5rem;">
+            <input type="hidden" name="price" value="{{ product.price }}">
+            <div style="display:flex;gap:0.75rem;align-items:end;">
+                <div class="form-group" style="margin-bottom:0;width:80px;">
+                    <label>Qty</label>
+                    <input type="number" name="quantity" value="1" min="1">
+                </div>
+                <div class="form-group" style="margin-bottom:0;flex:1;">
+                    <label>Coupon code</label>
+                    <input type="text" name="coupon" placeholder="optional">
+                </div>
+            </div>
+            <div class="form-group" style="margin-top:0.75rem;">
+                <label>Shipping address</label>
+                <input type="text" name="address" placeholder="123 Main St, City">
+            </div>
+            <button type="submit" class="btn btn-primary" style="width:100%;">Buy now</button>
+        </form>
+        {% else %}
+        <a href="/login" class="btn btn-primary" style="margin-top:1.5rem;">Log in to buy</a>
+        {% endif %}
+
+        <!-- check if product image loads -->
+        <div style="margin-top:1rem;">
+            <p class="muted" style="font-size:0.8rem;">Verify image URL:
+            <a href="/api/check-image?url=https://example.com/img.png" style="font-size:0.8rem;">test endpoint</a></p>
+        </div>
+    </div>
+</div>
+
+<!-- reviews -->
+<div style="margin-top:2.5rem;">
+    <h2 class="section-title">Reviews ({{ reviews|length }})</h2>
+
+    {% if user %}
+    <div class="card" style="margin-bottom:1.5rem;">
+        <form method="POST" action="/product/{{ product.id }}/review">
+            <div style="display:flex;gap:0.75rem;align-items:end;">
+                <div class="form-group" style="flex:1;margin-bottom:0;">
+                    <label>Your review</label>
+                    <textarea name="body" placeholder="What did you think?" rows="2"></textarea>
+                </div>
+                <div class="form-group" style="width:70px;margin-bottom:0;">
+                    <label>Rating</label>
+                    <select name="rating">
+                        <option value="5">5</option>
+                        <option value="4">4</option>
+                        <option value="3">3</option>
+                        <option value="2">2</option>
+                        <option value="1">1</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-primary" style="margin-bottom:0;">Post</button>
+            </div>
+        </form>
+    </div>
+    {% endif %}
+
+    {% for r in reviews %}
+    <div class="card" style="margin-bottom:0.75rem;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.4rem;">
+            <a href="/user/{{ r.user_id }}" style="font-weight:600;color:#e6edf3;">{{ r.username }}</a>
+            <span class="stars">{{ "★" * r.rating }}{{ "☆" * (5 - r.rating) }}</span>
+        </div>
+        <div>{{ r.body | safe }}</div>
+        <div class="muted" style="font-size:0.75rem;margin-top:0.4rem;">{{ r.created_at[:16] if r.created_at else '' }}</div>
+    </div>
+    {% endfor %}
+
+    {% if not reviews %}
+    <p class="muted">No reviews yet. Be the first!</p>
+    {% endif %}
+</div>
+{% endblock %}

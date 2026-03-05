@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h1>Hey, {{ user.username }}</h1>
+    <p>Manage your orders, messages, and account.</p>
+</div>
+
+<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-bottom:2rem;">
+    <div class="card" style="text-align:center;">
+        <div style="font-size:1.5rem;font-weight:700;color:#3fb950;">${{ "%.2f"|format(user.balance) }}</div>
+        <div class="muted" style="font-size:0.8rem;margin-top:0.25rem;">Balance</div>
+    </div>
+    <div class="card" style="text-align:center;">
+        <div style="font-size:1.5rem;font-weight:700;color:#58a6ff;">{{ orders|length }}</div>
+        <div class="muted" style="font-size:0.8rem;margin-top:0.25rem;">Orders</div>
+    </div>
+    <div class="card" style="text-align:center;">
+        <div style="font-size:1.5rem;font-weight:700;color:{% if unread > 0 %}#f97316{% else %}#8b949e{% endif %};">{{ unread }}</div>
+        <div class="muted" style="font-size:0.8rem;margin-top:0.25rem;">Unread Messages</div>
+    </div>
+</div>
+
+<div style="display:flex;gap:0.75rem;margin-bottom:2rem;flex-wrap:wrap;">
+    <a href="/settings" class="btn btn-outline">Account Settings</a>
+    <a href="/messages" class="btn btn-outline">Messages{% if unread > 0 %} ({{ unread }}){% endif %}</a>
+    <a href="/transfer" class="btn btn-outline">Transfer Funds</a>
+    {% if user.role == 'seller' or user.role == 'admin' %}
+    <a href="/seller/preview-banner?text=My+Shop" class="btn btn-outline">Preview Banner</a>
+    {% endif %}
+</div>
+
+<h2 class="section-title">Recent Orders</h2>
+{% if orders %}
+<div class="card" style="padding:0;overflow:hidden;">
+    <table>
+        <thead>
+            <tr><th>#</th><th>Product</th><th>Qty</th><th>Total</th><th>Status</th><th>Date</th><th></th></tr>
+        </thead>
+        <tbody>
+        {% for o in orders %}
+            <tr>
+                <td class="muted">{{ o.id }}</td>
+                <td>{{ o.product_name }}</td>
+                <td>{{ o.quantity }}</td>
+                <td class="price">${{ "%.2f"|format(o.total_price) }}</td>
+                <td><span class="badge badge-blue">{{ o.status }}</span></td>
+                <td class="muted" style="font-size:0.8rem;">{{ o.created_at[:16] if o.created_at else '' }}</td>
+                <td><a href="/order/{{ o.id }}">view</a></td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% else %}
+<div class="card">
+    <p class="muted">No orders yet. <a href="/products">Start shopping</a></p>
+</div>
+{% endif %}
+{% endblock %}
